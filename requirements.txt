@@ -1,2 +1,5 @@
+pdfminer.six
+python-docx
+spacy
 streamlit
 pandas
