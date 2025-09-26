@@ -1,0 +1,11 @@
+' VBA Macros for Solar Flex Dashboard
+
+Sub NavigateToSheet(sheetName As String)
+    Sheets(sheetName).Select
+End Sub
+
+Sub ShowMessage()
+    MsgBox "Welcome to the Solar Flex Dashboard!"
+End Sub
+
+' Add more macros as needed...
