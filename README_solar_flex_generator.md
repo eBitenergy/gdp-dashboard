@@ -3,24 +3,21 @@
 This README provides instructions for using the enhanced Solar Flex Excel generator script and VBA macros.
 
 ## Overview
-The script generates an enhanced Excel template (xlsx) with multiple project sheets, validations, dropdowns, and inserts images from the `./images` directory if present. It also creates a dashboard and KPIs for better data analysis.
+`generate_solar_flex_dashboard_pro.py` builds a multi-hoja Excel workbook para gestionar el pipeline comercial de Solarflex y Livoltek. Incluye un panel de control con KPIs, la base de oportunidades, requisitos BESS, proyectos de amianto Solarflex y tarifas de equipos Livoltek.
 
-## Features
-- Multiple project sheets
-- Data validation and dropdowns
-- Image insertion from `./images`
-- Dashboard and KPIs
+El script utiliza datos de ejemplo para que puedas ver el formato final sin necesidad de rellenar manualmente las hojas.
 
-## Usage
-1. Ensure you have the required libraries installed:
-   ```bash
-   pip install openpyxl pandas
-   ```
-2. Run the script:
-   ```bash
-   python generate_solar_flex_dashboard_pro.py
-   ```
-3. Open the generated Excel file and navigate through the sheets.
+## Dependencias
+```bash
+pip install openpyxl
+```
+
+## Uso
+```bash
+python generate_solar_flex_dashboard_pro.py
+```
+
+Se generará el archivo `Pipeline_Maestro_Solarflex_Livoltek.xlsx` en el directorio actual.
 
 ## VBA Macros
-Import the provided VBA macros from `macros_vba.txt` into your Excel for easy navigation between sheets.
+Importa los macros de `macros_vba.txt` en Excel para disponer de botones de navegación y acciones rápidas.
