@@ -24,3 +24,6 @@ The script generates an enhanced Excel template (xlsx) with multiple project she
 
 ## VBA Macros
 Import the provided VBA macros from `macros_vba.txt` into your Excel for easy navigation between sheets.
+## Estrategia de Dashboard Maestro para Inversión (Solarflexible)
+
+Se ha añadido una propuesta estratégica en: `docs/estrategia_dashboard_maestro_solarflex.md`.
