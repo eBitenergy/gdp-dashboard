@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.git/
+*.xlsx
+macros_vba.txt
+generate_solar_flex_dashboard_pro.py
