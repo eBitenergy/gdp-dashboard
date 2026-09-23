@@ -2,9 +2,12 @@
 Solar Flex IoT Data Simulator
 Genera datos realistas de instalaciones BIPV para el dashboard
 """
+import hashlib
+
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 
 INSTALLATIONS = [
@@ -50,6 +53,8 @@ SENSOR_SPECS = {
     "soc_bateria": {"unit": "%", "min": 5, "max": 100, "domain": "Building"},
 }
 
+CO2_FACTOR_KG_PER_KWH = 0.181
+
 
 def _solar_profile(hour: float) -> float:
     """Curva de irradiancia normalizada para hora del día."""
@@ -62,10 +67,10 @@ def _solar_profile(hour: float) -> float:
 
 def generate_timeseries(installation_id: str, days: int = 30, freq_minutes: int = 15) -> pd.DataFrame:
     """Genera series temporales de sensores para una instalación."""
-    np.random.seed(hash(installation_id) % 2**31)
+    np.random.seed(int(hashlib.md5(installation_id.encode()).hexdigest(), 16) % 2**31)
     inst = next((i for i in INSTALLATIONS if i["id"] == installation_id), INSTALLATIONS[0])
 
-    end = datetime.now().replace(minute=0, second=0, microsecond=0)
+    end = datetime.now(ZoneInfo("Europe/Madrid")).replace(minute=0, second=0, microsecond=0, tzinfo=None)
     start = end - timedelta(days=days)
     idx = pd.date_range(start, end, freq=f"{freq_minutes}min")
     n = len(idx)
@@ -143,16 +148,20 @@ def generate_timeseries(installation_id: str, days: int = 30, freq_minutes: int 
     return df
 
 
-def compute_kpis(df: pd.DataFrame, kwp: float) -> dict:
+def compute_kpis(df: pd.DataFrame, kwp: float, freq_minutes: int = None) -> dict:
     """Calcula KPIs energéticos principales."""
-    hours_step = 0.25  # 15 min = 0.25 h
+    if freq_minutes is None and len(df) > 1:
+        freq_minutes = round((df["timestamp"].iloc[1] - df["timestamp"].iloc[0]).total_seconds() / 60)
+    elif freq_minutes is None:
+        freq_minutes = 15
+    hours_step = freq_minutes / 60
     energia_kwh = (df["potencia_ac_kw"] * hours_step).sum()
     irr_kwh_m2 = (df["irradiancia_poa"] * hours_step / 1000).sum()
     pr = energia_kwh / (irr_kwh_m2 * kwp) if irr_kwh_m2 > 0 else 0
     especifico = energia_kwh / kwp if kwp > 0 else 0
     t_cel_max = df["temperatura_celula"].max()
     strain_max = max(df["strain_adhesivo_1_ue"].max(), df["strain_adhesivo_2_ue"].max())
-    co2_evitado = energia_kwh * 0.181 / 1000  # tCO2 (factor REE ~0.181 kg/kWh 2025)
+    co2_evitado = energia_kwh * CO2_FACTOR_KG_PER_KWH / 1000
     return {
         "energia_kwh": round(energia_kwh, 1),
         "pr": round(pr, 3),
@@ -160,7 +169,7 @@ def compute_kpis(df: pd.DataFrame, kwp: float) -> dict:
         "t_celula_max": round(t_cel_max, 1),
         "strain_max_ue": round(strain_max, 1),
         "co2_evitado_t": round(co2_evitado, 3),
-        "horas_datos": len(df) * 0.25,
+        "horas_datos": len(df) * hours_step,
     }
 
 
@@ -243,5 +252,41 @@ DPP_MATERIALS = {
             "gestores_autorizados": ["Recytel", "Ambilamp", "Recupel"],
             "contenido_critico": ["Indio (In)", "Selenio (Se)", "Cadmio (Cd) <trazas>"],
         }
-    }
+    },
+    "FlexOPV-150W": {
+        "capas": [
+            {"capa": "Encapsulante frontal", "material": "ETFE (Etileno-tetrafluoroetileno)", "espesor_mm": 0.3, "reciclable": True, "pct_reciclado_contenido": 0},
+            {"capa": "Célula PV", "material": "OPV (Semiconductor orgánico P3HT:PCBM)", "espesor_mm": 0.001, "reciclable": True, "pct_reciclado_contenido": 0},
+            {"capa": "Sustrato flexible", "material": "PET (Polietileno tereftalato)", "espesor_mm": 0.2, "reciclable": True, "pct_reciclado_contenido": 30},
+            {"capa": "Encapsulante posterior", "material": "ETFE", "espesor_mm": 0.3, "reciclable": True, "pct_reciclado_contenido": 0},
+            {"capa": "Barrera posterior", "material": "Film multicapa PE/Al", "espesor_mm": 0.1, "reciclable": False, "pct_reciclado_contenido": 0},
+            {"capa": "Adhesivo estructural", "material": "Poliuretano bicomponente AlfaDOC-A3", "espesor_mm": 3.0, "reciclable": False, "pct_reciclado_contenido": 0},
+            {"capa": "Panel sándwich soporte", "material": "Acero galvanizado + núcleo PU", "espesor_mm": 60.0, "reciclable": True, "pct_reciclado_contenido": 35},
+        ],
+        "peso_kg_m2": 3.2,
+        "certificaciones": ["IEC 62893", "BROOF(t1)", "CE", "RoHS"],
+        "fin_de_vida": {
+            "instrucciones": "Retirar con espátula térmica (T>50°C). Separar módulo OPV del soporte. Entregar a gestor RAEE autorizado.",
+            "gestores_autorizados": ["Recytel", "Ambilamp", "Recupel"],
+            "contenido_critico": ["Ningún material crítico (libre de metales pesados)"],
+        }
+    },
+    "FlexASi-100W": {
+        "capas": [
+            {"capa": "Encapsulante frontal", "material": "EVA (Etileno Vinil Acetato)", "espesor_mm": 0.5, "reciclable": True, "pct_reciclado_contenido": 0},
+            {"capa": "Célula PV", "material": "a-Si (Silicio amorfo hidrogenado)", "espesor_mm": 0.005, "reciclable": True, "pct_reciclado_contenido": 10},
+            {"capa": "Sustrato flexible", "material": "Acero inoxidable 430 (thin-film)", "espesor_mm": 0.15, "reciclable": True, "pct_reciclado_contenido": 40},
+            {"capa": "Encapsulante posterior", "material": "EVA", "espesor_mm": 0.5, "reciclable": True, "pct_reciclado_contenido": 0},
+            {"capa": "Tedlar posterior", "material": "PVF (Fluoruro de Polivinilo)", "espesor_mm": 0.15, "reciclable": False, "pct_reciclado_contenido": 0},
+            {"capa": "Adhesivo estructural", "material": "Poliuretano bicomponente AlfaDOC-B1", "espesor_mm": 2.5, "reciclable": False, "pct_reciclado_contenido": 0},
+            {"capa": "Panel sándwich soporte", "material": "Acero galvanizado + núcleo PU", "espesor_mm": 60.0, "reciclable": True, "pct_reciclado_contenido": 35},
+        ],
+        "peso_kg_m2": 4.5,
+        "certificaciones": ["IEC 61215", "IEC 61730", "BROOF(t1)", "CE", "RoHS"],
+        "fin_de_vida": {
+            "instrucciones": "Retirar con espátula térmica (T>60°C). Separar módulo a-Si del soporte. Entregar a gestor RAEE autorizado.",
+            "gestores_autorizados": ["Recytel", "Ambilamp", "Recupel"],
+            "contenido_critico": ["Silano residual (SiH₄) <trazas>"],
+        }
+    },
 }

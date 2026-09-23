@@ -18,7 +18,7 @@ st.set_page_config(page_title="Digital Twin — Solar Flex", page_icon="🔬", l
 st.markdown("""
 <style>
 [data-testid="stMetricValue"] { font-size: 1.5rem; font-weight: 700; }
-.kpi-card { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; text-align:center; }
+.kpi-card { background:rgba(248,250,252,0.1); border:1px solid rgba(226,232,240,0.3); border-radius:8px; padding:12px; text-align:center; }
 .level-badge { display:inline-block; padding:3px 10px; border-radius:12px; font-size:0.8rem; font-weight:600; }
 .level-1 { background:#dbeafe; color:#1d4ed8; }
 .level-2 { background:#dcfce7; color:#15803d; }
@@ -33,8 +33,8 @@ with st.sidebar:
     selected_id = st.selectbox("Seleccionar instalación", list(inst_names.keys()),
                                format_func=lambda x: inst_names[x])
     days = st.selectbox("Periodo de análisis", [7, 14, 30, 60, 90], index=2)
-    freq = st.selectbox("Resolución temporal", {"15 min": 15, "1 hora": 60, "1 día": 1440}.keys(), index=1)
     freq_map = {"15 min": 15, "1 hora": 60, "1 día": 1440}
+    freq = st.selectbox("Resolución temporal", list(freq_map.keys()), index=1)
     freq_min = freq_map[freq]
 
     st.markdown("---")
@@ -102,9 +102,9 @@ fig_energy.add_trace(go.Scatter(
     name="T° ambiente (°C)", line=dict(color="#3b82f6", width=1),
 ), row=2, col=1)
 
-fig_energy.update_layout(height=450, plot_bgcolor="white", hovermode="x unified",
+fig_energy.update_layout(height=450, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", hovermode="x unified",
                           legend=dict(orientation="h", y=1.06))
-fig_energy.update_yaxes(gridcolor="#f1f5f9")
+fig_energy.update_yaxes(gridcolor="rgba(148,163,184,0.2)")
 st.plotly_chart(fig_energy, use_container_width=True)
 
 # ── Dominio estructural-adhesivo ───────────────────────────────────────────────
@@ -137,19 +137,20 @@ fig_struct.add_trace(go.Scatter(
     name="Viento ×10 (m/s)", line=dict(color="#64748b", width=1, dash="dot"),
 ), row=1, col=2)
 
-fig_struct.update_layout(height=320, plot_bgcolor="white", hovermode="x unified",
+fig_struct.update_layout(height=320, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", hovermode="x unified",
                           legend=dict(orientation="h", y=1.12))
-fig_struct.update_yaxes(gridcolor="#f1f5f9")
+fig_struct.update_yaxes(gridcolor="rgba(148,163,184,0.2)")
 st.plotly_chart(fig_struct, use_container_width=True)
 
 # ── Performance Ratio histórico ────────────────────────────────────────────────
 st.subheader("📈 Performance Ratio diario")
-df_daily = df.set_index("timestamp").resample("D").apply({
+df_daily = df.set_index("timestamp").resample("D").agg({
     "potencia_ac_kw": "sum",
     "irradiancia_poa": "sum",
 }).reset_index()
-df_daily["energia_kwh"] = df_daily["potencia_ac_kw"] * (15 / 60) if freq_min <= 60 else df_daily["potencia_ac_kw"]
-df_daily["irr_kwh_m2"] = df_daily["irradiancia_poa"] * (15 / 60 if freq_min <= 60 else 1) / 1000
+hours_step = freq_min / 60
+df_daily["energia_kwh"] = df_daily["potencia_ac_kw"] * hours_step
+df_daily["irr_kwh_m2"] = df_daily["irradiancia_poa"] * hours_step / 1000
 df_daily["pr_diario"] = (df_daily["energia_kwh"] / (df_daily["irr_kwh_m2"] * inst["kwp"])).clip(0, 1)
 
 fig_pr = go.Figure()
@@ -162,8 +163,8 @@ fig_pr.add_hline(y=inst["pr_target"] * 100, line_dash="dash",
                  line_color="#1e3a8a", annotation_text=f"Objetivo {inst['pr_target']:.0%}")
 fig_pr.add_hline(y=inst["pr_target"] * 93, line_dash="dot",
                  line_color="#dc2626", annotation_text="Umbral alerta (−7%)")
-fig_pr.update_layout(height=250, plot_bgcolor="white", yaxis_title="PR (%)", yaxis_range=[60, 95])
-fig_pr.update_yaxes(gridcolor="#f1f5f9")
+fig_pr.update_layout(height=250, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", yaxis_title="PR (%)", yaxis_range=[60, 95])
+fig_pr.update_yaxes(gridcolor="rgba(148,163,184,0.2)")
 st.plotly_chart(fig_pr, use_container_width=True)
 
 # ── Consumo vs Producción (autoconsumo) ───────────────────────────────────────
@@ -184,11 +185,11 @@ fig_balance.add_trace(go.Scatter(
     name="SoC Batería (%)", yaxis="y2", line=dict(color="#8b5cf6", width=1, dash="dot"),
 ))
 fig_balance.update_layout(
-    height=300, plot_bgcolor="white", hovermode="x unified",
+    height=300, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", hovermode="x unified",
     legend=dict(orientation="h", y=1.1),
     yaxis2=dict(overlaying="y", side="right", title="SoC Batería (%)", range=[0, 110]),
 )
-fig_balance.update_yaxes(gridcolor="#f1f5f9")
+fig_balance.update_yaxes(gridcolor="rgba(148,163,184,0.2)")
 st.plotly_chart(fig_balance, use_container_width=True)
 
 # ── Info técnica instalación ───────────────────────────────────────────────────

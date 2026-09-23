@@ -18,11 +18,11 @@ st.set_page_config(page_title="Mantenimiento Predictivo — Solar Flex", page_ic
 
 st.markdown("""
 <style>
-.alert-card-alta  { background:#fee2e2; border-left:5px solid #dc2626; padding:14px 16px;
+.alert-card-alta  { background:rgba(220,38,38,0.15); border-left:5px solid #dc2626; padding:14px 16px;
                     border-radius:8px; margin:8px 0; }
-.alert-card-media { background:#fef3c7; border-left:5px solid #d97706; padding:14px 16px;
+.alert-card-media { background:rgba(217,119,6,0.15); border-left:5px solid #d97706; padding:14px 16px;
                     border-radius:8px; margin:8px 0; }
-.alert-card-baja  { background:#dcfce7; border-left:5px solid #16a34a; padding:14px 16px;
+.alert-card-baja  { background:rgba(22,163,74,0.15); border-left:5px solid #16a34a; padding:14px 16px;
                     border-radius:8px; margin:8px 0; }
 .ticket-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;
               padding:16px; margin:8px 0; }
@@ -140,8 +140,8 @@ with col2:
         height=240,
     )
     fig_health.add_vline(x=75, line_dash="dash", line_color="#64748b", annotation_text="Umbral OK")
-    fig_health.update_layout(plot_bgcolor="white", coloraxis_showscale=False, margin=dict(t=10))
-    fig_health.update_xaxes(gridcolor="#f1f5f9", range=[0, 110])
+    fig_health.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", coloraxis_showscale=False, margin=dict(t=10))
+    fig_health.update_xaxes(gridcolor="rgba(148,163,184,0.2)", range=[0, 110])
     st.plotly_chart(fig_health, use_container_width=True)
 
 with col3:
@@ -238,8 +238,8 @@ fig_strain_detail.add_trace(go.Scatter(
 fig_strain_detail.add_hline(y=30, line_dash="dash", line_color="#dc2626",
                              annotation_text="Umbral asimetría 30%", row=2, col=1)
 
-fig_strain_detail.update_layout(height=380, plot_bgcolor="white", hovermode="x unified")
-fig_strain_detail.update_yaxes(gridcolor="#f1f5f9")
+fig_strain_detail.update_layout(height=380, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", hovermode="x unified")
+fig_strain_detail.update_yaxes(gridcolor="rgba(148,163,184,0.2)")
 st.plotly_chart(fig_strain_detail, use_container_width=True)
 
 # ── Análisis rendimiento: IV curve / PR ───────────────────────────────────────
@@ -278,10 +278,10 @@ with tab_pr:
         marker_color=["#22c55e" if v >= 0 else "#ef4444" for v in pr_comp_df["Variación (pp)"]],
     ))
     fig_pr_comp.update_layout(
-        barmode="group", height=280, plot_bgcolor="white",
+        barmode="group", height=280, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
         yaxis_title="PR (%)", yaxis_range=[70, 90],
     )
-    fig_pr_comp.update_yaxes(gridcolor="#f1f5f9")
+    fig_pr_comp.update_yaxes(gridcolor="rgba(148,163,184,0.2)")
     st.plotly_chart(fig_pr_comp, use_container_width=True)
 
 with tab_soiling:
@@ -302,8 +302,8 @@ with tab_soiling:
         x=df_soil_d["timestamp"], y=df_soil_d["pr_d"] * 100,
         name="PR diario (%)", line=dict(color="#f97316", width=2),
     ), secondary_y=True)
-    fig_soil.update_layout(height=260, plot_bgcolor="white", hovermode="x unified")
-    fig_soil.update_yaxes(title_text="PM2.5 (µg/m³)", secondary_y=False, gridcolor="#f1f5f9")
+    fig_soil.update_layout(height=260, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", hovermode="x unified")
+    fig_soil.update_yaxes(title_text="PM2.5 (µg/m³)", secondary_y=False, gridcolor="rgba(148,163,184,0.2)")
     fig_soil.update_yaxes(title_text="PR (%)", secondary_y=True, range=[60, 95])
     st.plotly_chart(fig_soil, use_container_width=True)
     st.caption("Cuando PM2.5 > 50 µg/m³ durante >3 días consecutivos → recomendación automática de limpieza.")

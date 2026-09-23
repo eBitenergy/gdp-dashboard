@@ -10,7 +10,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
-from data.solar_flex_simulator import INSTALLATIONS, generate_timeseries, compute_kpis, DPP_MATERIALS
+from data.solar_flex_simulator import INSTALLATIONS, generate_timeseries, compute_kpis, DPP_MATERIALS, CO2_FACTOR_KG_PER_KWH
 
 st.set_page_config(page_title="Pasaporte Digital — Solar Flex", page_icon="📋", layout="wide")
 
@@ -126,7 +126,11 @@ with tab1:
     st.markdown("---")
     st.markdown("#### 🧱 Composición de materiales por capa")
 
-    mat_data = DPP_MATERIALS.get(inst["panel_model"], DPP_MATERIALS["FlexCIGS-200W"])
+    mat_key = inst["panel_model"]
+    if mat_key not in DPP_MATERIALS:
+        st.warning(f"⚠️ Datos de materiales no disponibles para **{mat_key}**. Mostrando datos de referencia (FlexCIGS-200W).")
+        mat_key = "FlexCIGS-200W"
+    mat_data = DPP_MATERIALS[mat_key]
     mat_df = pd.DataFrame(mat_data["capas"])
     mat_df["reciclable"] = mat_df["reciclable"].apply(lambda x: "♻️ Sí" if x else "❌ No")
     mat_df["pct_reciclado_contenido"] = mat_df["pct_reciclado_contenido"].apply(lambda x: f"{x}%" if x > 0 else "—")
@@ -142,8 +146,8 @@ with tab1:
         labels={"espesor_mm": "Espesor (mm)", "capa": "", "reciclable": "¿Reciclable?"},
         height=300,
     )
-    fig_mat.update_layout(plot_bgcolor="white", margin=dict(t=10))
-    fig_mat.update_xaxes(gridcolor="#f1f5f9")
+    fig_mat.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", margin=dict(t=10))
+    fig_mat.update_xaxes(gridcolor="rgba(148,163,184,0.2)")
     st.plotly_chart(fig_mat, use_container_width=True)
 
 
@@ -180,7 +184,7 @@ with tab2:
     df_daily["energia_kwh_d"] = df_daily["potencia_ac_kw"] * 1.0
     df_daily["irr_d"] = df_daily["irradiancia_poa"] / 1000
     df_daily["pr_d"] = (df_daily["energia_kwh_d"] / (df_daily["irr_d"] * inst["kwp"])).clip(0, 1)
-    df_daily["co2_d"] = df_daily["energia_kwh_d"] * 0.181 / 1000
+    df_daily["co2_d"] = df_daily["energia_kwh_d"] * CO2_FACTOR_KG_PER_KWH / 1000
     df_daily["co2_acum"] = df_daily["co2_d"].cumsum()
 
     col_pr, col_co2 = st.columns(2)
@@ -195,9 +199,9 @@ with tab2:
         ))
         fig_pr_hist.add_hline(y=inst["pr_target"] * 100, line_dash="dash",
                                line_color="#1e3a8a", annotation_text="Garantía fabricante")
-        fig_pr_hist.update_layout(height=250, plot_bgcolor="white",
+        fig_pr_hist.update_layout(height=250, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
                                    yaxis_title="PR (%)", yaxis_range=[60, 95])
-        fig_pr_hist.update_yaxes(gridcolor="#f1f5f9")
+        fig_pr_hist.update_yaxes(gridcolor="rgba(148,163,184,0.2)")
         st.plotly_chart(fig_pr_hist, use_container_width=True)
 
     with col_co2:
@@ -208,9 +212,9 @@ with tab2:
             fill="tozeroy", fillcolor="rgba(34,197,94,0.2)",
             line=dict(color="#16a34a", width=2), name="tCO₂ acumulado",
         ))
-        fig_co2.update_layout(height=250, plot_bgcolor="white",
+        fig_co2.update_layout(height=250, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
                                yaxis_title="tCO₂ evitado")
-        fig_co2.update_yaxes(gridcolor="#f1f5f9")
+        fig_co2.update_yaxes(gridcolor="rgba(148,163,184,0.2)")
         st.plotly_chart(fig_co2, use_container_width=True)
 
     st.markdown("**Evolución strain adhesivo — diagnóstico integridad**")
@@ -223,8 +227,8 @@ with tab2:
                           annotation_text="Umbral alerta despegue incipiente")
     fig_strain.add_hrect(y0=0, y1=200, fillcolor="rgba(34,197,94,0.05)", line_width=0, annotation_text="Zona OK")
     fig_strain.add_hrect(y0=200, y1=350, fillcolor="rgba(251,191,36,0.07)", line_width=0, annotation_text="Zona vigilancia")
-    fig_strain.update_layout(height=220, plot_bgcolor="white", yaxis_title="µε")
-    fig_strain.update_yaxes(gridcolor="#f1f5f9")
+    fig_strain.update_layout(height=220, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", yaxis_title="µε")
+    fig_strain.update_yaxes(gridcolor="rgba(148,163,184,0.2)")
     st.plotly_chart(fig_strain, use_container_width=True)
 
     st.markdown("**Registro de eventos críticos**")
@@ -242,7 +246,8 @@ with tab2:
 with tab3:
     st.subheader("♻️ Información de Fin de Vida — Economía Circular")
 
-    mat_data = DPP_MATERIALS.get(inst["panel_model"], DPP_MATERIALS["FlexCIGS-200W"])
+    mat_key_fov = inst["panel_model"] if inst["panel_model"] in DPP_MATERIALS else "FlexCIGS-200W"
+    mat_data = DPP_MATERIALS[mat_key_fov]
     fov = mat_data["fin_de_vida"]
 
     col_inst, col_recycl = st.columns(2)
@@ -351,4 +356,4 @@ with tab4:
     """)
 
 st.markdown("---")
-st.caption("Pasaporte Digital Solar Flex · Conforme ESPR Reg. (UE) 2024/1781 · CSRD · Modelo de utilidad OEPM alfaDOC · © 2025 Solar Flex Technologies S.L.")
+st.caption("Pasaporte Digital Solar Flex · Conforme ESPR Reg. (UE) 2024/1781 · CSRD · Modelo de utilidad OEPM alfaDOC · © 2026 Solar Flex Technologies S.L.")

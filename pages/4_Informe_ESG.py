@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
-from data.solar_flex_simulator import INSTALLATIONS, generate_timeseries, compute_kpis
+from data.solar_flex_simulator import INSTALLATIONS, generate_timeseries, compute_kpis, CO2_FACTOR_KG_PER_KWH
 
 st.set_page_config(page_title="Informe ESG — Solar Flex", page_icon="🌱", layout="wide")
 
@@ -58,7 +58,6 @@ def load_annual_data():
     for inst in INSTALLATIONS:
         df90 = generate_timeseries(inst["id"], days=90, freq_minutes=60)
         kpis = compute_kpis(df90, inst["kwp"])
-        # Extrapolamos a anual (×4)
         energia_anual = kpis["energia_kwh"] * 4
         co2_anual = kpis["co2_evitado_t"] * 4
         results.append({
@@ -67,6 +66,7 @@ def load_annual_data():
             "location": inst["location"],
             "tipo": inst["type"],
             "kwp": inst["kwp"],
+            "area_m2": inst["area_m2"],
             "energia_anual_kwh": round(energia_anual, 0),
             "co2_evitado_t": round(co2_anual, 3),
             "pr": kpis["pr"],
@@ -75,6 +75,8 @@ def load_annual_data():
     return pd.DataFrame(results)
 
 annual_df = load_annual_data()
+st.caption("⚠️ Estimación anual: los valores se extrapolan a partir de 90 días de datos (×4). "
+           "La irradiancia real varía estacionalmente; para informes auditados, utilizar datos de 12 meses completos.")
 insts_sel_names = set(inst_scope)
 filtered_df = annual_df[annual_df["name"].isin(insts_sel_names)] if insts_sel_names else annual_df
 
@@ -108,7 +110,7 @@ with tab_ghg:
     st.subheader("🌍 Emisiones GHG Protocol — Alcance 2 (Scope 2)")
 
     col1, col2, col3, col4 = st.columns(4)
-    factor_ree = 0.181  # kg CO2/kWh REE España 2025
+    factor_ree = CO2_FACTOR_KG_PER_KWH
     col1.metric("Energía renovable producida", f"{total_energia/1000:,.1f} MWh")
     col2.metric("CO₂ evitado (Scope 2)", f"{total_co2:.2f} t CO₂eq",
                 delta=f"Factor REE: {factor_ree} kg/kWh")
@@ -145,11 +147,11 @@ with tab_ghg:
             name="CO₂ evitado ×10 (t)", line=dict(color="#22c55e", width=2), yaxis="y2",
         ))
         fig_monthly.update_layout(
-            height=280, plot_bgcolor="white", hovermode="x unified",
+            height=280, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", hovermode="x unified",
             yaxis2=dict(overlaying="y", side="right"),
             legend=dict(orientation="h", y=1.1),
         )
-        fig_monthly.update_yaxes(gridcolor="#f1f5f9")
+        fig_monthly.update_yaxes(gridcolor="rgba(148,163,184,0.2)")
         st.plotly_chart(fig_monthly, use_container_width=True)
 
     with col_cum:
@@ -163,8 +165,8 @@ with tab_ghg:
         target_co2 = total_co2
         fig_cum.add_hline(y=target_co2, line_dash="dash", line_color="#1e3a8a",
                           annotation_text=f"Objetivo anual: {target_co2:.1f} t")
-        fig_cum.update_layout(height=280, plot_bgcolor="white", yaxis_title="tCO₂eq")
-        fig_cum.update_yaxes(gridcolor="#f1f5f9")
+        fig_cum.update_layout(height=280, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", yaxis_title="tCO₂eq")
+        fig_cum.update_yaxes(gridcolor="rgba(148,163,184,0.2)")
         st.plotly_chart(fig_cum, use_container_width=True)
 
     st.markdown("**Desglose por instalación**")
@@ -174,8 +176,8 @@ with tab_ghg:
         labels={"co2_evitado_t": "tCO₂ evitado/año", "name": ""},
         height=260,
     )
-    fig_inst_co2.update_layout(plot_bgcolor="white")
-    fig_inst_co2.update_yaxes(gridcolor="#f1f5f9")
+    fig_inst_co2.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
+    fig_inst_co2.update_yaxes(gridcolor="rgba(148,163,184,0.2)")
     st.plotly_chart(fig_inst_co2, use_container_width=True)
 
     st.markdown("""
@@ -192,7 +194,7 @@ with tab_circular:
     st.subheader("♻️ Indicadores de Economía Circular")
 
     col_c1, col_c2, col_c3, col_c4 = st.columns(4)
-    total_area = filtered_df["kwp"].sum() / 0.15  # ~150 Wp/m²
+    total_area = filtered_df["area_m2"].sum()
     col_c1.metric("Área cubierta activada", f"{total_area:,.0f} m²", delta="superficie con DPP")
     col_c2.metric("Contenido reciclado medio", "28%", delta="acero + CIGS")
     col_c3.metric("Materiales críticos trazados", "100%", delta="In, Se, Cd — pasaporte")
@@ -245,8 +247,8 @@ with tab_circular:
             color_continuous_scale=["#dc2626", "#d97706", "#22c55e"],
             range_color=[0, 25], height=260,
         )
-        fig_vida.update_layout(plot_bgcolor="white", coloraxis_showscale=False, margin=dict(t=10))
-        fig_vida.update_xaxes(gridcolor="#f1f5f9")
+        fig_vida.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", coloraxis_showscale=False, margin=dict(t=10))
+        fig_vida.update_xaxes(gridcolor="rgba(148,163,184,0.2)")
         st.plotly_chart(fig_vida, use_container_width=True)
 
 
@@ -363,4 +365,4 @@ with tab_csrd:
     st.dataframe(platforms, use_container_width=True, hide_index=True)
 
 st.markdown("---")
-st.caption(f"Informe ESG Solar Flex {year_sel} · Metodología GHG Protocol Scope 2 · Factor emisión REE España: 0.181 kg CO₂/kWh · CSRD conforme ESRS E1/E5 · © 2025 Solar Flex Technologies S.L.")
+st.caption(f"Informe ESG Solar Flex {year_sel} · Metodología GHG Protocol Scope 2 · Factor emisión REE España: {CO2_FACTOR_KG_PER_KWH} kg CO₂/kWh · CSRD conforme ESRS E1/E5 · © 2026 Solar Flex Technologies S.L.")

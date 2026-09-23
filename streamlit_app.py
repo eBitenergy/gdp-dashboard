@@ -23,9 +23,9 @@ st.set_page_config(
 st.markdown("""
 <style>
 [data-testid="stMetricValue"] { font-size: 1.6rem; font-weight: 700; }
-.alert-alta  { background:#fee2e2; border-left:4px solid #dc2626; padding:10px 14px; border-radius:6px; margin:6px 0; }
-.alert-media { background:#fef3c7; border-left:4px solid #d97706; padding:10px 14px; border-radius:6px; margin:6px 0; }
-.alert-baja  { background:#dcfce7; border-left:4px solid #16a34a; padding:10px 14px; border-radius:6px; margin:6px 0; }
+.alert-alta  { background:rgba(220,38,38,0.15); border-left:4px solid #dc2626; padding:10px 14px; border-radius:6px; margin:6px 0; }
+.alert-media { background:rgba(217,119,6,0.15); border-left:4px solid #d97706; padding:10px 14px; border-radius:6px; margin:6px 0; }
+.alert-baja  { background:rgba(22,163,74,0.15); border-left:4px solid #16a34a; padding:10px 14px; border-radius:6px; margin:6px 0; }
 .status-operativo    { color:#16a34a; font-weight:700; }
 .status-alerta       { color:#d97706; font-weight:700; }
 .status-mantenimiento{ color:#2563eb; font-weight:700; }
@@ -34,7 +34,13 @@ st.markdown("""
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.image("https://via.placeholder.com/200x60/1e3a5f/ffffff?text=SOLAR+FLEX", use_container_width=True)
+    st.markdown("""
+    <div style="background:linear-gradient(135deg,#1e3a5f,#0891b2); color:white;
+                padding:12px 16px; border-radius:8px; text-align:center;
+                font-size:1.3rem; font-weight:700; letter-spacing:1px;">
+        ☀️ SOLAR FLEX
+    </div>
+    """, unsafe_allow_html=True)
     st.markdown("### 🛰️ IoT Platform v1.0")
     st.markdown("---")
     st.markdown("**Navegación**")
@@ -88,6 +94,7 @@ col_map, col_table = st.columns([1.2, 1])
 
 with col_map:
     st.subheader("📍 Mapa de instalaciones")
+    fleet_df = fleet_df.copy()
     color_map_status = {"operativo": "#16a34a", "alerta": "#d97706", "mantenimiento": "#2563eb"}
     fleet_df["color"] = fleet_df["Estado"].map(color_map_status)
     fleet_df["pr_pct"] = (fleet_df["PR_real"] * 100).round(1)
@@ -121,7 +128,7 @@ with col_table:
         return colors.get(val, "")
 
     st.dataframe(
-        display_df.style.applymap(style_estado, subset=["Estado"]),
+        display_df.style.map(style_estado, subset=["Estado"]),
         use_container_width=True, height=360
     )
 
@@ -147,9 +154,9 @@ with col_pr:
     fig_pr.add_hline(y=81, line_dash="dash", line_color="#94a3b8", annotation_text="Objetivo 81%")
     fig_pr.update_layout(
         yaxis_title="Performance Ratio (%)", yaxis_range=[70, 90],
-        height=300, margin=dict(t=20, b=40), plot_bgcolor="white",
+        height=300, margin=dict(t=20, b=40), plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
     )
-    fig_pr.update_yaxes(gridcolor="#f1f5f9")
+    fig_pr.update_yaxes(gridcolor="rgba(148,163,184,0.2)")
     st.plotly_chart(fig_pr, use_container_width=True)
 
 with col_energia:
@@ -161,8 +168,8 @@ with col_energia:
         height=300,
     )
     fig_en.update_xaxes(tickangle=-30)
-    fig_en.update_layout(margin=dict(t=20, b=80), plot_bgcolor="white", legend_title="Tipo")
-    fig_en.update_yaxes(gridcolor="#f1f5f9")
+    fig_en.update_layout(margin=dict(t=20, b=80), plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", legend_title="Tipo")
+    fig_en.update_yaxes(gridcolor="rgba(148,163,184,0.2)")
     st.plotly_chart(fig_en, use_container_width=True)
 
 st.markdown("---")
@@ -210,8 +217,8 @@ with col_deg:
     )
     fig_deg.add_hline(y=7, line_dash="dash", line_color="#dc2626", annotation_text="Umbral alerta 7%")
     fig_deg.update_xaxes(tickangle=-30)
-    fig_deg.update_layout(margin=dict(t=20, b=80), plot_bgcolor="white", coloraxis_showscale=False)
-    fig_deg.update_yaxes(gridcolor="#f1f5f9")
+    fig_deg.update_layout(margin=dict(t=20, b=80), plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", coloraxis_showscale=False)
+    fig_deg.update_yaxes(gridcolor="rgba(148,163,184,0.2)")
     st.plotly_chart(fig_deg, use_container_width=True)
 
 # ── Footer ────────────────────────────────────────────────────────────────────
@@ -219,5 +226,5 @@ st.markdown("---")
 st.caption(
     "**Solar Flex IoT Platform** · Arquitectura: LoRaWAN + Edge Gateway + Data Lakehouse · "
     "Cumplimiento: ESPR/DPP · CSRD · EPBD · RENOCICLA | "
-    "© 2025 Solar Flex Technologies S.L."
+    "© 2026 Solar Flex Technologies S.L."
 )

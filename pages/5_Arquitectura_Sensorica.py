@@ -122,7 +122,7 @@ if view == "Capas del sistema":
             arrowhead=2, arrowsize=1, arrowwidth=2, arrowcolor="#94a3b8",
         )
     fig_flow.update_layout(
-        height=240, plot_bgcolor="white",
+        height=240, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[0, 12]),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[0, 3]),
         margin=dict(t=10, b=10),
@@ -206,8 +206,8 @@ elif view == "Catálogo sensores":
                         color_discrete_map={"Energético-PV": "#f97316", "Estructural": "#7c3aed",
                                             "Ambiental": "#22c55e", "Building": "#3b82f6"},
                         height=200)
-    fig_counts.update_layout(plot_bgcolor="white", showlegend=False, margin=dict(t=10))
-    fig_counts.update_yaxes(gridcolor="#f1f5f9")
+    fig_counts.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", showlegend=False, margin=dict(t=10))
+    fig_counts.update_yaxes(gridcolor="rgba(148,163,184,0.2)")
     st.plotly_chart(fig_counts, use_container_width=True)
 
 elif view == "Stack tecnológico":
@@ -254,9 +254,10 @@ elif view == "Stack tecnológico":
         {"Componente": "Instalación y puesta en marcha", "Pequeña (<100m²)": 200, "Mediana (100-500m²)": 400, "Grande (>500m²)": 800},
         {"Componente": "NFC/QR Pasaporte Digital", "Pequeña (<100m²)": 30, "Mediana (100-500m²)": 50, "Grande (>500m²)": 100},
     ])
-    cost_data["TOTAL"] = cost_data[["Pequeña (<100m²)", "Mediana (100-500m²)", "Grande (>500m²)"]].sum()
-    st.dataframe(cost_data.style.format({"Pequeña (<100m²)": "€{:.0f}", "Mediana (100-500m²)": "€{:.0f}",
-                                          "Grande (>500m²)": "€{:.0f}", "TOTAL": "€{:.0f}"}),
+    size_cols = ["Pequeña (<100m²)", "Mediana (100-500m²)", "Grande (>500m²)"]
+    total_row = pd.DataFrame([{"Componente": "TOTAL", **{c: cost_data[c].sum() for c in size_cols}}])
+    cost_data = pd.concat([cost_data, total_row], ignore_index=True)
+    st.dataframe(cost_data.style.format({c: "€{:.0f}" for c in size_cols}),
                  use_container_width=True, hide_index=True)
 
 else:  # Roadmap
@@ -363,10 +364,10 @@ else:  # Roadmap
         name="Ingresos recurrentes (€k/año)",
     ))
     fig_rev.update_layout(
-        height=260, plot_bgcolor="white", yaxis_title="€k/año",
+        height=260, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", yaxis_title="€k/año",
         title="Proyección ingresos recurrentes SaaS+O&M+ESG",
     )
-    fig_rev.update_yaxes(gridcolor="#f1f5f9")
+    fig_rev.update_yaxes(gridcolor="rgba(148,163,184,0.2)")
     st.plotly_chart(fig_rev, use_container_width=True)
 
 st.markdown("---")
